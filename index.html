@@ -4,18 +4,179 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>vizilo11 on GitHub</title>
-<body>
-<h1>vizilo11 on GitHub</h1>
-<ul>
-    <li><a href="https://vizilo11.github.io/szemelyiszam/">Személyi szám</a></li>
-    <li><a href="https://vizilo11.github.io/levenshtein/levenshtein.html">Levenshtein-távolság (edit distance)</a></li>
-    <li><a href="https://vizilo11.github.io/SureWin/">Sure Win</a></li>
-    <li><a href="https://vizilo11.github.io/FelfedeztetoKiserlet/">Felfedeztető kísérlet, 2017--2021 (pdf-ek)</a></li>
-    <li><a href="https://vizilo11.github.io/Mercator/Mercator_Guessing.html">Tippelős játék a Mercator-vetület kapcsán</a></li>
-</ul>
-</body>
+    <style>
+        /* ALAP BEÁLLÍTÁSOK
+           A GitHub 'Dark Mode' színvilágát használjuk, mert az elegáns és szemkímélő.
+        */
+        :root {
+            --bg-color: #0d1117;        /* Háttérszín */
+            --card-bg: #161b22;         /* Kártya háttér */
+            --border-color: #30363d;    /* Keret színe */
+            --text-main: #c9d1d9;       /* Fő szövegszín */
+            --text-muted: #8b949e;      /* Halványabb szöveg */
+            --accent: #58a6ff;          /* Kiemelő szín (kék) */
+        }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* TARTALOM KONTÉNER */
+        .container {
+            width: 100%;
+            max-width: 640px; /* Nem lesz túl széles nagy monitoron sem */
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        /* FEJLÉC (Kép + Név) */
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%; /* Kerek kép */
+            border: 2px solid var(--border-color);
+            margin-bottom: 15px;
+            object-fit: cover;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .bio {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        /* A LISTA ÉS A LINKEK */
+        .project-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 16px; /* Távolság a kártyák között */
+        }
+
+        .project-card {
+            display: block; /* Hogy az egész kártya kattintható legyen */
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: all 0.2s ease; /* Finom animáció */
+            text-align: left;
+        }
+
+        /* HOVER EFFEKT (Amikor ráviszed az egeret) */
+        .project-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px); /* Picit megemelkedik */
+            background-color: #1c2128;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .project-title {
+            display: block;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .project-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* LÁBLÉC */
+        footer {
+            margin-top: 50px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        footer a {
+            color: var(--text-muted);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <img src="https://github.com/vizilo11.png" alt="vizilo11 profilkép" class="profile-img">
+
+        <h1>vizilo11 on GitHub</h1>
+        <p class="bio">Órák a Könyvből projekt</p>
+
+        <div class="project-list">
+
+            <a href="https://vizilo11.github.io/szemelyiszam/" target="_blank" class="project-card">
+                <span class="project-title">Személyi Szám</span>
+                <span class="project-desc">Találd ki egy személyi szám hiányzó karakterét!</span>
+            </a>
+
+            <a href="https://vizilo11.github.io/SureWin/" target="_blank" class="project-card">
+                <span class="project-title">Sure Win</span>
+                <span class="project-desc">Előfordulhat, hogy biztosan tdsz nyerni sportfogadással?</span>
+            </a>
+
+            <a href="https://vizilo11.github.io/Mercator/Mercator_Guessing.html" target="_blank" class="project-card">
+                <span class="project-title">Távolságok megtippelése Mercator-vetületen</span>
+                <span class="project-desc">Mennyire tudod jól megtippelni 5 várospár távolságát?</span>
+            </a>
+
+        </div>
+
+        <p class="bio">Felfedeztető kísérleti anyagok</p>
+
+        <div class="project-list">
+
+            <a href="https://vizilo11.github.io/FelfedeztetoKiserlet/" target="_blank" class="project-card">
+                <span class="project-title">Személyi Szám</span>
+                <span class="project-desc">Felfedeztető kísérlet, 2017--2021 (pdf-ek)</span>
+            </a>
+
+        </div>
+
+        <p class="bio">Egyéb projektek</p>
+
+        <div class="project-list">
+
+            <a href="https://vizilo11.github.io/levenshtein/levenshtein.html" target="_blank" class="project-card">
+                <span class="project-title">Levenshtein-távolság</span>
+                <span class="project-desc">Két string Levenshtein-távolágát (edit distance) kiszámító alkalmazás</span>
+            </a>
+
+        </div>
+
+        <footer>
+            <p>&copy; 2024 vizilo11. <a href="https://github.com/vizilo11">GitHub Profil</a></p>
+        </footer>
+    </div>
+
+</body>
 </html>
+
+
+
 
 
 
