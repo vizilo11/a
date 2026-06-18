@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stabil párosítás — Gale–Shapley</title>
+<style>
+  /* ===== KONFIGURÁCIÓ ===== */
+  /* A maximális létszámot itt lehet utólag módosítani (MAX_N) — lásd a JS részt is. */
+
+  :root {
+    --ink: #1c1a17;
+    --paper: #f3ede1;
+    --paper-2: #eae1d0;
+    --line: #cbbfa8;
+    --rose: #b03a4a;       /* nők akcentus */
+    --indigo: #2f4b7c;     /* férfiak akcentus */
+    --rose-soft: #f0d8d6;
+    --indigo-soft: #d7dfee;
+    --good: #2f6b4f;
+    --good-soft: #d6e7dc;
+    --bad: #9a2d3a;
+    --bad-soft: #f3d4d4;
+    --muted: #7a7062;
+    --shadow: 0 1px 0 #fff inset, 0 2px 8px rgba(40,30,15,.08);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(176,58,74,.05), transparent 40%),
+      radial-gradient(circle at 88% 4%, rgba(47,75,124,.05), transparent 40%),
+      var(--paper);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 22px 16px 64px;
+  }
+
+  header.masthead {
+    text-align: center;
+    padding: 8px 0 18px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 22px;
+  }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    font-size: 11px;
+    color: var(--muted);
+    margin: 0 0 6px;
+  }
+  h1 {
+    font-size: clamp(28px, 8vw, 42px);
+    line-height: .98;
+    margin: 0;
+    font-weight: 600;
+    letter-spacing: -.01em;
+  }
+  h1 .amp { font-style: italic; color: var(--rose); }
+  .sub {
+    margin: 10px auto 0;
+    max-width: 46ch;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .panel {
+    background: linear-gradient(180deg, #fbf6ec, var(--paper-2));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .panel h2 {
+    font-size: 13px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 12px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .panel h2 .num {
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    width: 22px; height: 22px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex: none;
+  }
+
+  /* ===== Létszám és Seed vezérlő ===== */
+  .control-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .stepper {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--ink);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fffdf8;
+  }
+  .stepper button {
+    width: 46px; height: 46px;
+    font-size: 22px;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .stepper button:active { background: var(--paper-2); }
+  .stepper button:disabled { color: var(--line); cursor: default; }
+  .stepper .val {
+    min-width: 48px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    line-height: 46px;
+  }
+  .control-row .label {
+    font-size: 15px;
+  }
+  .control-row .label small { display:block; color: var(--muted); font-size: 12.5px; }
+
+  /* Seed mező stílusa */
+  .seed-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+  }
+  .seed-input {
+    font-family: ui-monospace, monospace;
+    font-size: 15px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fffdf8;
+    color: var(--ink);
+    max-width: 140px;
+  }
+  .seed-input:focus {
+    outline: 2px solid var(--indigo);
+  }
+
+  .btn {
+    appearance: none;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    font-family: inherit;
+    font-size: 16px;
+    padding: 13px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform .04s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn.secondary {
+    background: #fffdf8;
+    color: var(--ink);
+  }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+
+  /* ===== Preferenciatáblák ===== */
+  .tables {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 520px) {
+    .tables { grid-template-columns: 1fr; }
+  }
+  .pref {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fffdf8;
+  }
+  .pref .cap {
+    padding: 9px 12px;
+    font-size: 12px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #fff;
+    display:flex; align-items:center; gap:8px;
+  }
+  .pref.women .cap { background: var(--rose); }
+  .pref.men .cap { background: var(--indigo); }
+  .pref .cap .hint { margin-left:auto; font-size:10px; opacity:.8; letter-spacing:.06em; text-transform:none; }
+
+  .ptable { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .ptable th, .ptable td {
+    padding: 8px 6px;
+    text-align: center;
+    border-bottom: 1px solid var(--paper-2);
+  }
+  .ptable thead th {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    background: var(--paper);
+  }
+  .ptable tbody th {
+    font-weight: 700;
+    background: var(--paper);
+    width: 2.4em;
+  }
+  .women tbody th { color: var(--rose); }
+  .men tbody th { color: var(--indigo); }
+  .ptable td.rank-cell { font-variant-numeric: tabular-nums; }
+
+  /* ===== Párosítás bevitel ===== */
+  .assign-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+  }
+  .assign-cell {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fffdf8;
+    padding: 10px 10px 11px;
+    text-align: center;
+  }
+  .assign-cell .who {
+    font-size: 13px;
+    color: var(--rose);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .assign-cell .arrow { color: var(--muted); font-size: 12px; }
+  .assign-cell select {
+    width: 100%;
+    margin-top: 6px;
+    font-family: inherit;
+    font-size: 17px;
+    padding: 9px 6px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink);
+    text-align: center;
+  }
+  .assign-cell select:focus-visible,
+  .stepper button:focus-visible,
+  .btn:focus-visible {
+    outline: 3px solid var(--indigo);
+    outline-offset: 2px;
+  }
+
+  /* ===== Eredmény ===== */
+  .result { margin-top: 14px; }
+  .verdict {
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 16px;
+    line-height: 1.5;
+    border: 1px solid;
+  }
+  .verdict.good { background: var(--good-soft); border-color: var(--good); color: #234a37; }
+  .verdict.bad  { background: var(--bad-soft);  border-color: var(--bad);  color: #5e1c25; }
+  .verdict.warn { background: #f7ecd0; border-color: #c79a3a; color: #6a4d12; }
+  .verdict .tag {
+    display: inline-block;
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .verdict.good .tag { background: var(--good); }
+  .verdict.bad .tag  { background: var(--bad); }
+  .verdict.warn .tag { background: #c79a3a; }
+  .verdict b { font-weight: 700; }
+  .pair-name { white-space: nowrap; }
+  .pair-name.w { color: var(--bad); }
+  .verdict .detail { margin-top: 10px; font-size: 14.5px; }
+  .verdict .detail ul { margin: 6px 0 0; padding-left: 18px; }
+  .verdict .detail li { margin: 3px 0; }
+
+  .hidden { display: none !important; }
+
+  footer.foot {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12.5px;
+    margin-top: 28px;
+    line-height: 1.5;
+  }
+  footer.foot code {
+    font-family: ui-monospace, monospace;
+    background: var(--paper-2);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Gale–Shapley · stabil párosítás</p>
+    <h1>Nők <span class="amp">&amp;</span> férfiak</h1>
+    <p class="sub">Adj meg egy stabil párosítást.</p>
+  </header>
+
+  <section class="panel">
+    <h2><span class="num">1</span> Beállítások</h2>
+    <div class="control-row" style="margin-bottom: 14px;">
+      <div class="stepper" role="group" aria-label="Létszám beállítása">
+        <button id="dec" aria-label="Kevesebb">−</button>
+        <span class="val" id="nVal" aria-live="polite">3</span>
+        <button id="inc" aria-label="Több">+</button>
+      </div>
+      <div class="label" style="margin-right: 14px;">
+        nő és férfi.
+      </div>
+
+      <div class="seed-container">
+        <label for="seedInput">Seed:</label>
+        <input type="text" id="seedInput" class="seed-input" placeholder="opcionális" title="Ha megadsz egy kódot, mindig ugyanazok a preferenciák generálódnak.">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="genBtn">Preferenciák generálása</button>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="prefPanel">
+    <h2><span class="num">2</span> Preferenciasorrendek</h2>
+    <div class="tables">
+      <div class="pref women">
+        <div class="cap">Nők</div>
+        <table class="ptable" id="womenTable"></table>
+      </div>
+      <div class="pref men">
+        <div class="cap">Férfiak</div>
+        <table class="ptable" id="menTable"></table>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="assignPanel">
+    <h2><span class="num">3</span> Add meg a párosítást</h2>
+    <p class="sub" style="text-align:left;margin:0 0 12px;max-width:none;">Minden nőhöz válassz egy férfit. Egy férfi csak egyszer szerepelhet.</p>
+    <div class="assign-grid" id="assignGrid"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn" id="checkBtn">Ellenőrzés</button>
+      <button class="btn secondary" id="clearBtn">Törlés</button>
+    </div>
+    <div class="result hidden" id="result"></div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ====== KONFIGURÁLHATÓ PARAMÉTEREK ====== */
+  const MIN_N = 2;
+  const MAX_N = 6;          // <-- ezt az egy számot kell átírni a felső határhoz
+  let N = 3;                // aktuális létszám
+
+  /* ====== ÁLLAPOT ====== */
+  let womenPref = [];
+  let menPref = [];
+  let womenRank = [];
+  let menRank = [];
+
+  /* ====== SEED-ELHETŐ VÉLETLENSZÁM GENERÁTOR (LCG) ====== */
+  let lcgState = 1;
+  function seedRandom(seedStr) {
+    // Egyszerű hash a sztringből számmá alakításhoz
+    let hash = 0;
+    for (let i = 0; i < seedStr.length; i++) {
+      hash = Math.imul(31, hash) + seedStr.charCodeAt(i) | 0;
+    }
+    lcgState = (hash === 0) ? 1 : Math.abs(hash);
+  }
+  function nextRandom() {
+    // Standard LCG paraméterek (Numerical Recipes)
+    lcgState = (Math.imul(1103515245, lcgState) + 12345) & 0x7fffffff;
+    return lcgState / 0x80000000;
+  }
+
+  /* ====== SEGÉD: nevek ====== */
+  const womanName = i => String.fromCharCode(65 + i);        // A, B, C, ...
+  const manName   = j => String(j + 1);                     // 1, 2, 3, ...
+
+  /* ====== DOM ====== */
+  const $ = id => document.getElementById(id);
+  const nVal = $("nVal"), incBtn = $("inc"), decBtn = $("dec");
+  const genBtn = $("genBtn"), seedInput = $("seedInput");
+  const prefPanel = $("prefPanel"), assignPanel = $("assignPanel");
+  const womenTable = $("womenTable"), menTable = $("menTable");
+  const assignGrid = $("assignGrid"), result = $("result");
+
+  /* ====== Létszámvezérlő ====== */
+  function refreshStepper() {
+    nVal.textContent = N;
+    decBtn.disabled = (N <= MIN_N);
+    incBtn.disabled = (N >= MAX_N);
+  }
+  incBtn.addEventListener("click", () => { if (N < MAX_N) { N++; refreshStepper(); } });
+  decBtn.addEventListener("click", () => { if (N > MIN_N) { N--; refreshStepper(); } });
+
+  /* ====== Determinisztikus Fisher–Yates keverés ====== */
+  function shuffledIndices(k, useSeed) {
+    const a = Array.from({ length: k }, (_, i) => i);
+    for (let i = k - 1; i > 0; i--) {
+      const r = Math.floor((useSeed ? nextRandom() : Math.random()) * (i + 1));
+      [a[i], a[r]] = [a[r], a[i]];
+    }
+    return a;
+  }
+
+  /* ====== Preferenciák generálása ====== */
+  function generate() {
+    const seedValue = seedInput.value.trim();
+    const useSeed = seedValue !== "";
+
+    if (useSeed) {
+      seedRandom(seedValue);
+    }
+
+    womenPref = Array.from({ length: N }, () => shuffledIndices(N, useSeed));
+    menPref   = Array.from({ length: N }, () => shuffledIndices(N, useSeed));
+
+    // rangtáblák felépítése
+    womenRank = womenPref.map(list => {
+      const r = new Array(N);
+      list.forEach((man, pos) => { r[man] = pos; });
+      return r;
+    });
+    menRank = menPref.map(list => {
+      const r = new Array(N);
+      list.forEach((woman, pos) => { r[woman] = pos; });
+      return r;
+    });
+
+    renderPrefTables();
+    renderAssignGrid();
+    result.classList.add("hidden");
+    result.innerHTML = "";
+    prefPanel.classList.remove("hidden");
+    assignPanel.classList.remove("hidden");
+  }
+
+  /* ====== Preferenciatáblák kirajzolása ====== */
+  function renderPrefTables() {
+    const headCells = Array.from({ length: N }, (_, p) => "<th>" + (p + 1) + ". hely</th>").join("");
+
+    let wHtml = "<thead><tr><th>nő</th>" + headCells + "</tr></thead><tbody>";
+    for (let i = 0; i < N; i++) {
+      wHtml += "<tr><th>" + womanName(i) + "</th>";
+      wHtml += womenPref[i].map(m => '<td class="rank-cell">' + manName(m) + "</td>").join("");
+      wHtml += "</tr>";
+    }
+    wHtml += "</tbody>";
+    womenTable.innerHTML = wHtml;
+
+    let mHtml = "<thead><tr><th>férfi</th>" + headCells + "</tr></thead><tbody>";
+    for (let j = 0; j < N; j++) {
+      mHtml += "<tr><th>" + manName(j) + "</th>";
+      mHtml += menPref[j].map(w => '<td class="rank-cell">' + womanName(w) + "</td>").join("");
+      mHtml += "</tr>";
+    }
+    mHtml += "</tbody>";
+    menTable.innerHTML = mHtml;
+  }
+
+  /* ====== Párosítás bevitel ====== */
+  function renderAssignGrid() {
+    let html = "";
+    for (let i = 0; i < N; i++) {
+      let opts = '<option value="">—</option>';
+      for (let j = 0; j < N; j++) {
+        opts += '<option value="' + j + '">' + manName(j) + "</option>";
+      }
+      html +=
+        '<div class="assign-cell">' +
+          '<div class="who">' + womanName(i) + ' párja:</div>' +
+          '<select data-woman="' + i + '" aria-label="' + womanName(i) + ' nő párja">' + opts + "</select>" +
+        "</div>";
+    }
+    assignGrid.innerHTML = html;
+  }
+
+  $("clearBtn").addEventListener("click", () => {
+    assignGrid.querySelectorAll("select").forEach(s => { s.value = ""; });
+    result.classList.add("hidden");
+    result.innerHTML = "";
+  });
+
+  /* ====== Ellenőrzés ====== */
+  function check() {
+    const selects = Array.from(assignGrid.querySelectorAll("select"));
+    const wifeOfMan = new Array(N).fill(-1);
+    const husbandOfWoman = new Array(N).fill(-1);
+
+    const missing = [];
+    for (let i = 0; i < N; i++) {
+      const v = selects[i].value;
+      if (v === "") missing.push(womanName(i));
+      else husbandOfWoman[i] = parseInt(v, 10);
+    }
+    if (missing.length) {
+      showVerdict("warn", "HIÁNYZÓ ADAT",
+        "Nincs minden nőhöz beírva férfi. Hiányzik: <b>" + missing.join(", ") + "</b>.");
+      return;
+    }
+
+    const seen = {};
+    const dups = [];
+    for (let i = 0; i < N; i++) {
+      const m = husbandOfWoman[i];
+      if (seen[m] !== undefined) dups.push(manName(m));
+      seen[m] = true;
+      wifeOfMan[m] = i;
+    }
+    if (dups.length) {
+      const uniqDups = [...new Set(dups)];
+      showVerdict("warn", "NEM PÁROSÍTÁS",
+        "Ez nem érvényes párosítás: a következő férfi(ak) többször szerepel(nek): <b>" +
+        uniqDups.join(", ") + "</b>. Minden férfi pontosan egyszer kell szerepeljen.");
+      return;
+    }
+
+    let blocking = null;
+    outer:
+    for (let w = 0; w < N; w++) {
+      const curHusband = husbandOfWoman[w];
+      for (let m = 0; m < N; m++) {
+        if (m === curHusband) continue;
+        const wPrefersM = womenRank[w][m] < womenRank[w][curHusband];
+        if (!wPrefersM) continue;
+        const curWife = wifeOfMan[m];
+        const mPrefersW = menRank[m][w] < menRank[m][curWife];
+        if (mPrefersW) { blocking = { w, m, curHusband, curWife }; break outer; }
+      }
+    }
+
+    if (!blocking) {
+      showVerdict("good", "STABIL", "Ez egy <b>stabil párosítás</b> — nincs olyan pár, amelyik el tudna szökni.");
+      return;
+    }
+
+    const { w, m, curHusband, curWife } = blocking;
+    const detail =
+      "<div class='detail'>Miért szöknének el?<ul>" +
+      "<li><span class='pair-name w'>" + womanName(w) + " nő</span> számára szimpatikusabb " +
+        "<b>" + manName(m) + "</b>, mint a jelenlegi párja: <b>" + manName(curHusband) + "</b>.</li>" +
+      "<li><b>" + manName(m) + ". férfi</b> számára szimpatikusabb " +
+        "<span class='pair-name w'>" + womanName(w) + "</span>, mint a jelenlegi párja: <span class='pair-name w'>" + womanName(curWife) + "</span>.</li>" +
+      "</ul></div>";
+
+    showVerdict("bad", "NEM STABIL",
+      "Találtunk egy elszökni vágyó párt: <span class='pair-name w'>" + womanName(w) +
+      " nő</span> <b>&amp;</b> <b>" + manName(m) + ". férfi</b>." + detail);
+  }
+
+  function showVerdict(kind, tag, html) {
+    result.className = "result";
+    result.innerHTML = '<div class="verdict ' + kind + '"><span class="tag">' + tag + "</span><div>" + html + "</div></div>";
+    result.classList.remove("hidden");
+    result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  $("checkBtn").addEventListener("click", check);
+  genBtn.addEventListener("click", generate);
+
+  refreshStepper();
+})();
+</script>
+</body>
+</html>
